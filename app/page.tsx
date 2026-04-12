@@ -1,15 +1,15 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { MapPin, Navigation, Globe, ExternalLink, Info } from 'lucide-react';
+import { MapPin, Navigation, Info, Globe } from 'lucide-react';
 
-export default function BusanApp() {
+export default function BusanTravelPage() {
   const [items, setItems] = useState<any[]>([]);
   const [lang, setLang] = useState('Kr');
   const [loading, setLoading] = useState(true);
   const [userLoc, setUserLoc] = useState<{lat: number, lng: number} | null>(null);
 
-  // 1. 거리 계산 함수 (Haversine)
-  const getDist = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  // 거리 계산 공식 (Haversine)
+  const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371; 
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
@@ -18,73 +18,103 @@ export default function BusanApp() {
   };
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition((p) => {
-      setUserLoc({ lat: p.coords.latitude, lng: p.coords.longitude });
-    });
+    // 현재 위치 파악
+    navigator.geolocation.getCurrentPosition(
+      (p) => setUserLoc({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => console.log("위치 정보 접근 거부")
+    );
   }, []);
 
   useEffect(() => {
-    const load = async () => {
+    const fetchData = async () => {
       setLoading(true);
-      const res = await fetch(`/api/travel?lang=${lang}`);
-      const data = await res.json();
-      // API 응답 구조에 맞게 데이터 추출 [cite: 35, 47]
-      let list = data[`getRecommended${lang}`]?.item || [];
-      
-      if (userLoc) {
-        list = list.map((item: any) => ({
-          ...item,
-          dist: getDist(userLoc.lat, userLoc.lng, parseFloat(item.LAT), parseFloat(item.LNG))
-        })).sort((a: any, b: any) => a.dist - b.dist);
+      try {
+        const res = await fetch(`/api/travel?lang=${lang}`);
+        const data = await res.json();
+        // 각 언어별 API 응답 구조에 맞춰 데이터 추출 [cite: 23, 32, 44]
+        let list = data[`getRecommended${lang}`]?.item || [];
+        
+        if (userLoc && list.length > 0) {
+          list = list.map((item: any) => ({
+            ...item,
+            dist: getDistance(userLoc.lat, userLoc.lng, parseFloat(item.LAT), parseFloat(item.LNG))
+          })).sort((a: any, b: any) => a.dist - b.dist); // 가까운 순 정렬
+        }
+        setItems(list);
+      } catch (e) {
+        console.error(e);
       }
-      setItems(list);
       setLoading(false);
     };
-    load();
+    fetchData();
   }, [lang, userLoc]);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20">
-      {/* 고정 상단바 */}
-      <nav className="sticky top-0 bg-white/70 backdrop-blur-lg border-b p-4 flex justify-between items-center z-50">
-        <h1 className="font-extrabold text-xl text-blue-600">Busan Travel</h1>
-        <div className="flex gap-1">
-          {['Kr', 'En', 'Ja', 'Zhs'].map(l => (
-            <button key={l} onClick={() => setLang(l)} className={`px-2 py-1 text-xs rounded ${lang === l ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>{l}</button>
-          ))}
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-10">
+      <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b p-4 z-50">
+        <div className="max-w-2xl mx-auto flex justify-between items-center">
+          <h1 className="text-xl font-black text-blue-600 tracking-tighter">BUSAN THEME</h1>
+          <div className="flex bg-slate-100 p-1 rounded-xl">
+            {['Kr', 'En', 'Ja', 'Zhs'].map(l => (
+              <button 
+                key={l} 
+                onClick={() => setLang(l)} 
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition ${lang === l ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400'}`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
         </div>
-      </nav>
+      </header>
 
-      <div className="p-4 max-w-2xl mx-auto space-y-6">
-        {loading ? <p className="text-center py-20 font-medium">부산의 이야기를 가져오는 중...</p> : 
+      <main className="p-4 max-w-2xl mx-auto space-y-4">
+        {loading ? (
+          <div className="text-center py-20 font-semibold text-slate-400">부산의 여행지를 찾고 있습니다...</div>
+        ) : (
           items.map((item, i) => (
-            <div key={i} className="bg-white rounded-3xl shadow-sm border overflow-hidden transition-all hover:shadow-md">
-              <img src={item.MAIN_IMG_NORMAL} className="w-full h-56 object-cover" alt={item.MAIN_TITLE} />
-              <div className="p-5 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-blue-500 uppercase tracking-widest">{item.CATE2_NM}</span>
-                  {item.dist && <span className="text-xs text-gray-400 font-mono">{item.dist.toFixed(1)} km away</span>}
+            <div key={i} className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="relative">
+                <img src={item.MAIN_IMG_NORMAL} className="w-full h-64 object-cover" alt={item.MAIN_TITLE} />
+                <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-md text-white px-4 py-1 rounded-full text-xs font-medium">
+                  {item.CATE2_NM}
                 </div>
-                <h2 className="text-xl font-bold leading-tight">{item.MAIN_TITLE}</h2>
-                <div className="flex items-center gap-1 text-gray-500 text-sm">
-                  <MapPin size={14} /> <span>{item.GUGUN_NM} {item.ADDR1}</span>
+              </div>
+              <div className="p-6 space-y-3">
+                <div className="flex justify-between items-start">
+                  <h2 className="text-2xl font-bold tracking-tight">{item.MAIN_TITLE}</h2>
+                  {item.dist && (
+                    <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">
+                      {item.dist.toFixed(1)} km
+                    </span>
+                  )}
                 </div>
-                <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">{item.TITLE}</p>
+                <div className="flex items-center gap-1 text-slate-500 text-sm">
+                  <MapPin size={14} className="text-blue-500" />
+                  <span>{item.GUGUN_NM}</span>
+                </div>
+                <p className="text-slate-600 text-sm leading-relaxed">{item.TITLE}</p>
                 
-                {/* 기능 최대한 활용: 상세내용, 교통정보 등  */}
-                <div className="pt-4 border-t flex gap-2">
-                  <button onClick={() => alert(item.ITEMCNTNTS.replace(/<[^>]*>/g, ''))} className="flex-1 bg-gray-900 text-white py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2">
-                    <Info size={16} /> 정보 보기
+                <div className="pt-4 flex gap-2">
+                  <button 
+                    onClick={() => alert(item.ITEMCNTNTS.replace(/<[^>]*>/g, ''))}
+                    className="flex-1 bg-slate-900 text-white py-4 rounded-2xl text-sm font-bold active:scale-95 transition"
+                  >
+                    상세 정보 [cite: 32]
                   </button>
-                  <a href={`https://map.kakao.com/link/to/${item.MAIN_TITLE},${item.LAT},${item.LNG}`} target="_blank" className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+                  <a 
+                    href={`https://map.kakao.com/link/to/${item.MAIN_TITLE},${item.LAT},${item.LNG}`}
+                    target="_blank"
+                    className="aspect-square bg-slate-100 p-4 rounded-2xl flex items-center justify-center text-slate-600"
+                  >
                     <Navigation size={20} />
                   </a>
                 </div>
               </div>
             </div>
           ))
-        }
-      </div>
+        )}
+      </main>
     </div>
   );
 }
