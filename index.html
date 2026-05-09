@@ -31,11 +31,8 @@
             try {
                 var response = await fetch('/api/theme?numOfRows=12');
                 var result = await response.json();
-                var items = result.getRecommendedKr
-                    ? result.getRecommendedKr.item
-                    : (result.response && result.response.body && result.response.body.items
-                        ? result.response.body.items.item
-                        : []);
+                var raw = result.getRecommendedKr ? result.getRecommendedKr.item : [];
+var items = Array.isArray(raw) ? raw : Object.values(raw);
 
                 if (!items || items.length === 0) {
                     grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">데이터가 없습니다.</div>';
