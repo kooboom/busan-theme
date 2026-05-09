@@ -3,121 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Busan Vibe - Theme Travel</title>
+    <title>Busan Vibe v3.0</title> <!-- 💡 버전 번호를 확인하세요 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
     <style>
-        /* 모든 요소에 프리텐다드 폰트를 강제 적용하고 여백과 스타일을 초기화합니다 */
         * { font-family: 'Pretendard', sans-serif !important; }
-        .card-shadow { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05); }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
 
-    <nav class="bg-white/90 backdrop-blur-md border-b sticky top-0 z-50">
+    <nav class="bg-white border-b sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-            <h1 class="text-2xl font-black text-blue-600 italic tracking-tighter">BUSAN VIBE</h1>
-            <button onclick="location.reload()" class="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:scale-105 transition-transform active:scale-95 shadow-lg">
-                페이지 새로고침
+            <h1 class="text-2xl font-black text-blue-600 italic">BUSAN VIBE <span class="text-xs text-slate-300">v3.0</span></h1>
+            <button onclick="location.reload(true)" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold text-sm">
+                강력 새로고침
             </button>
         </div>
     </nav>
 
     <main class="max-w-7xl mx-auto px-6 py-16">
-        <header class="mb-12">
-            <h2 class="text-4xl font-black text-slate-900 mb-4 tracking-tight leading-tight">부산 테마 여행 코스</h2>
-            <p class="text-slate-500 font-medium text-lg italic">공공데이터 기반 부산 여행 가이드 서비스입니다.</p>
-        </header>
-
-        <div id="theme-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            <div class="col-span-full py-32 text-center text-slate-400 font-bold animate-pulse">데이터를 불러오고 있습니다...</div>
+        <div id="theme-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="col-span-full py-20 text-center font-bold text-slate-400">데이터 로딩 중...</div>
         </div>
     </main>
 
     <script>
-        // 텍스트를 펼치고 접는 기능 (인라인 스타일을 직접 제어하여 확실하게 숨김)
-        function toggleText(idx) {
-            const shortEl = document.getElementById(`short-${idx}`);
-            const fullEl = document.getElementById(`full-${idx}`);
-            const btn = document.getElementById(`btn-${idx}`);
-
-            if (fullEl.style.display === 'none') {
-                fullEl.style.display = 'block';
-                shortEl.style.display = 'none';
-                btn.innerText = '접기 -';
-            } else {
-                fullEl.style.display = 'none';
-                shortEl.style.display = 'block';
-                btn.innerText = '더보기 +';
-            }
-        }
-
-        async function fetchThemeData() {
-            const grid = document.getElementById('theme-grid');
-            try {
-                const response = await fetch('/api/theme?numOfRows=12');
-                const result = await response.json();
-                const items = result.getRecommendedKr?.item || result.response?.body?.items?.item || [];
-
-                let html = '';
-                items.forEach((item, idx) => {
-                    // 1. API 데이터 내의 모든 HTML 태그 및 특수기호 완전 제거
-                    const rawText = (item.ITEMCNTNTS || '정보가 없습니다.').replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ');
-                    
-                    // 2. 글자 수 강제 제한 (100자 이상이면 자름)
-                    const isLong = rawText.length > 100;
-                    const shortText = isLong ? rawText.substring(0, 100) + '...' : rawText;
-                    
-                    const imageUrl = item.MAIN_IMG_NORMAL || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e';
-
-                    html += `
-                    <div class="bg-white rounded-[2.5rem] overflow-hidden card-shadow border border-slate-100 flex flex-col h-full hover:translate-y-[-5px] transition-all duration-300">
-                        <!-- 이미지 영역 (이미지가 없을 때도 높이 유지) -->
-                        <div class="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                            <img src="${imageUrl}" class="w-full h-full object-cover">
-                            <div class="absolute top-5 left-5">
-                                <span class="bg-white/90 backdrop-blur px-4 py-1.5 rounded-full text-[10px] font-black text-blue-600 shadow-sm tracking-widest">
-                                    ${item.GUGUN_NM || 'BUSAN'}
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <div class="p-8 flex flex-col flex-1">
-                            <!-- 제목: 무조건 1줄 처리하여 정렬 맞춤 -->
-                            <h3 class="text-xl font-extrabold text-slate-800 mb-4 line-clamp-1">${item.MAIN_TITLE}</h3>
-                            
-                            <!-- 텍스트 영역 -->
-                            <div class="flex-1 cursor-pointer" onclick="toggleText(${idx})">
-                                <p id="short-${idx}" class="text-slate-500 text-[14px] leading-relaxed mb-1" style="display: block;">
-                                    ${shortText}
-                                </p>
-                                <p id="full-${idx}" class="text-slate-500 text-[14px] leading-relaxed mb-1" style="display: none;">
-                                    ${rawText}
-                                </p>
-                                ${isLong ? `<button id="btn-${idx}" class="text-[11px] font-bold text-blue-500 mt-2">더보기 +</button>` : ''}
-                            </div>
-                            
-                            <!-- 카드 하단 정보 -->
-                            <div class="mt-8 pt-6 border-t border-slate-50 flex justify-between items-center text-[10px] font-bold text-slate-400">
-                                <span>📍 ${item.ADDR1.split(' ').slice(0, 2).join(' ')}</span>
-                                <a href="https://map.kakao.com/?q=${encodeURIComponent(item.MAIN_TITLE)}" target="_blank" class="text-blue-600 border-b border-blue-100">MAP →</a>
-                            </div>
-                        </div>
-                    </div>
-                    `;
-                });
-                grid.innerHTML = html;
-            } catch (e) {
-                grid.innerHTML = '<div class="col-span-full py-32 text-center text-red-400 font-bold">API 연결을 확인해주세요.</div>';
-            }
-        }
-        window.onload = fetchThemeData;
-    </script>
-</body>
-</html>    </main>
-
-    <script>
-        // 💡 텍스트를 펼치고 접는 로직을 완전히 새로 짰습니다
         function toggleText(idx) {
             const shortEl = document.getElementById(`short-${idx}`);
             const fullEl = document.getElementById(`full-${idx}`);
@@ -143,134 +54,31 @@
 
                 let html = '';
                 items.forEach((item, idx) => {
-                    // 1. HTML 태그 완전 제거 및 텍스트 정리
-                    const rawText = (item.ITEMCNTNTS || '정보가 없습니다.').replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ');
+                    // 1. 모든 HTML 태그를 정규식으로 완전히 제거 (글꼴/줄바꿈 방해 차단)
+                    const cleanText = (item.ITEMCNTNTS || '').replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim();
                     
-                    // 2. 자바스크립트로 80자만 잘라서 저장 (CSS가 아닌 데이터 레벨에서 자름)
-                    const shortText = rawText.length > 80 ? rawText.substring(0, 80) + '...' : rawText;
+                    // 2. 무조건 50자에서 썰어버림 (CSS가 아닌 데이터 레벨 절단)
+                    const isLong = cleanText.length > 50;
+                    const shortText = isLong ? cleanText.substring(0, 50) + '...' : cleanText;
                     
                     const imageUrl = item.MAIN_IMG_NORMAL || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e';
 
                     html += `
-                    <div class="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-100 flex flex-col h-full">
-                        <div class="relative aspect-[4/3] overflow-hidden bg-slate-200">
+                    <div class="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col h-full">
+                        <div class="relative aspect-[4/3] bg-slate-200">
                             <img src="${imageUrl}" class="w-full h-full object-cover">
-                            <div class="absolute top-4 left-4">
-                                <span class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-black text-blue-600 shadow-sm">
-                                    ${item.GUGUN_NM || 'BUSAN'}
-                                </span>
-                            </div>
                         </div>
-                        
-                        <div class="p-7 flex flex-col flex-1">
-                            <h3 class="text-lg font-extrabold text-slate-800 mb-4 leading-snug">${item.MAIN_TITLE}</h3>
+                        <div class="p-6 flex flex-col flex-1">
+                            <h3 class="text-lg font-bold text-slate-800 mb-3 line-clamp-1">${item.MAIN_TITLE}</h3>
                             
-                            <div class="flex-1 cursor-pointer group" onclick="toggleText(${idx})">
-                                <!-- 요약 텍스트 -->
-                                <p id="short-${idx}" class="text-slate-500 text-[13px] leading-relaxed mb-1">
+                            <div class="flex-1 cursor-pointer" onclick="toggleText(${idx})">
+                                <p id="short-${idx}" class="text-slate-500 text-sm leading-relaxed">
                                     ${shortText}
                                 </p>
-                                <!-- 전체 텍스트 (기본은 숨김) -->
-                                <p id="full-${idx}" class="hidden text-slate-500 text-[13px] leading-relaxed mb-1">
-                                    ${rawText}
-                                </p>
-                                <button id="btn-${idx}" class="text-[11px] font-bold text-blue-500 group-hover:underline">
-                                    ${rawText.length > 80 ? '더보기 +' : ''}
-                                </button>
-                            </div>
-                            
-                            <div class="mt-6 pt-5 border-t border-slate-50 flex justify-between items-center text-[10px] font-bold text-slate-400">
-                                <span>📍 ${item.ADDR1.split(' ').slice(0, 2).join(' ')}</span>
-                                <a href="https://map.kakao.com/?q=${encodeURIComponent(item.MAIN_TITLE)}" target="_blank" class="text-blue-600">지도보기 →</a>
-                            </div>
-                        </div>
-                    </div>
-                    `;
-                });
-                grid.innerHTML = html;
-            } catch (e) {
-                grid.innerHTML = '<div class="col-span-full text-center py-20 text-red-400 font-bold">데이터를 로드할 수 없습니다.</div>';
-            }
-        }
-        window.onload = fetchThemeData;
-    </script>
-</body>
-</html>            </button>
-        </div>
-    </nav>
-
-    <main class="max-w-7xl mx-auto px-6 py-16">
-        <header class="mb-12">
-            <h2 class="text-4xl font-black text-slate-900 mb-4 tracking-tight">부산 테마 여행 코스</h2>
-            <p class="text-slate-500 font-medium text-lg">텍스트를 누르면 전체 내용이 펼쳐집니다.</p>
-        </header>
-
-        <div id="theme-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
-            <div class="col-span-full py-32 text-center text-slate-400 font-bold animate-pulse">데이터 로딩 중...</div>
-        </div>
-    </main>
-
-    <script>
-        // 텍스트 토글 함수
-        function toggleContent(idx) {
-            const el = document.getElementById(`desc-${idx}`);
-            const btn = document.getElementById(`btn-${idx}`);
-            if (el.classList.contains('line-clamp-custom')) {
-                el.classList.remove('line-clamp-custom');
-                el.classList.add('expanded');
-                btn.innerText = '접기 -';
-            } else {
-                el.classList.add('line-clamp-custom');
-                el.classList.remove('expanded');
-                btn.innerText = '더보기 +';
-            }
-        }
-
-        // HTML 태그를 제거하는 안전 함수
-        function stripHtml(html) {
-            let doc = new DOMParser().parseFromString(html, 'text/html');
-            return doc.body.textContent || "";
-        }
-
-        async function fetchThemeData() {
-            const grid = document.getElementById('theme-grid');
-            try {
-                const response = await fetch('/api/theme?numOfRows=12');
-                const result = await response.json();
-                const items = result.getRecommendedKr?.item || result.response?.body?.items?.item || [];
-
-                let html = '';
-                items.forEach((item, idx) => {
-                    // API 데이터 내의 HTML 태그를 제거하여 글꼴과 줄바꿈을 초기화합니다.
-                    const cleanText = stripHtml(item.ITEMCNTNTS || '정보가 없습니다.');
-                    const imageUrl = item.MAIN_IMG_NORMAL || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e';
-
-                    html += `
-                    <div class="bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-100 flex flex-col">
-                        <div class="relative aspect-[4/3] overflow-hidden">
-                            <img src="${imageUrl}" class="w-full h-full object-cover">
-                            <div class="absolute top-6 left-6">
-                                <span class="bg-white/90 backdrop-blur px-4 py-1.5 rounded-full text-[10px] font-black text-blue-600 shadow-sm uppercase tracking-widest">
-                                    ${item.GUGUN_NM || 'BUSAN'}
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <div class="p-8 flex-1 flex flex-col">
-                            <h3 class="text-xl font-extrabold text-blue-600 mb-5 leading-tight">${item.MAIN_TITLE}</h3>
-                            
-                            <div class="cursor-pointer group/text" onclick="toggleContent(${idx})">
-                                <p id="desc-${idx}" class="line-clamp-custom text-slate-500 text-[14px] leading-relaxed mb-2 transition-all">
+                                <p id="full-${idx}" class="hidden text-slate-500 text-sm leading-relaxed">
                                     ${cleanText}
                                 </p>
-                                <button id="btn-${idx}" class="text-[11px] font-bold text-blue-400 group-hover/text:text-blue-600 mb-6 transition-colors">
-                                    더보기 +
-                                </button>
-                            </div>
-                            
-                            <div class="mt-auto pt-6 border-t border-slate-50 flex justify-between items-center">
-                                <span class="text-[10px] font-bold text-slate-400">📍 ${item.ADDR1.split(' ').slice(0, 2).join(' ')}</span>
-                                <a href="https://map.kakao.com/?q=${encodeURIComponent(item.MAIN_TITLE)}" target="_blank" class="text-[10px] font-black text-blue-600 border-b-2 border-blue-50">MAP →</a>
+                                ${isLong ? `<button id="btn-${idx}" class="text-xs font-bold text-blue-500 mt-2">더보기 +</button>` : ''}
                             </div>
                         </div>
                     </div>
@@ -278,7 +86,7 @@
                 });
                 grid.innerHTML = html;
             } catch (e) {
-                grid.innerHTML = '<div class="col-span-full text-center py-20 text-red-500 font-bold">데이터를 불러올 수 없습니다.</div>';
+                grid.innerHTML = '<div class="col-span-full text-center py-20 text-red-400">데이터 오류</div>';
             }
         }
         window.onload = fetchThemeData;
