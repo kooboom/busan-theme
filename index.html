@@ -77,12 +77,12 @@
                             <h3 class="text-lg font-bold text-slate-800 mb-3 line-clamp-1">${item.MAIN_TITLE}</h3>
                             
                             <div class="flex-1 cursor-pointer" onclick="toggleText(${idx})">
-                                <p id="short-${idx}" class="text-slate-500 text-sm leading-relaxed" style="display:block">
-                                    ${shortText}
-                                </p>
+                                <p id="short-${idx}" class="text-slate-500 text-sm leading-relaxed line-clamp-3" style="display:block">
+    ${cleanText}
+</p>
                                 <p id="full-${idx}" class="text-slate-500 text-sm leading-relaxed" style="display:none">
-                                    ${cleanText}
-                                </p>
+    ${cleanText}
+</p>
                                 ${isLong ? `<button id="btn-${idx}" class="text-xs font-bold text-blue-500 mt-2">더보기 +</button>` : ''}
                             </div>
                         </div>
