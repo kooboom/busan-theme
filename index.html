@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busan Vibe v5.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+    <style>
+        * { font-family: 'Pretendard', sans-serif !important; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <nav class="bg-white border-b sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <h1 class="text-2xl font-black text-blue-600 italic">BUSAN VIBE <span class="text-xs text-slate-300">v5.0</span></h1>
+            <button onclick="location.reload(true)" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold text-sm">새로고침</button>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-16">
+        <div id="theme-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="col-span-full py-20 text-center font-bold text-slate-400">데이터 로딩 중...</div>
+        </div>
+    </main>
+
+    <script>
+        async function fetchThemeData() {
+            var grid = document.getElementById('theme-grid');
+            try {
+                var response = await fetch('/api/theme?numOfRows=12');
+                var result = await response.json();
+                var raw = result.getRecommendedKr ? result.getRecommendedKr.item : [];
+var items = Array.isArray(raw) ? raw : Object.values(raw);
+
+                if (!items || items.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400">데이터가 없습니다.</div>';
+                    return;
+                }
+
+                grid.innerHTML = '';
+
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+
+                    var cleanText = (item.ITEMCNTNTS || '')
+                        .replace(/<[^>]*>/g, '')
+                        .replace(/&nbsp;/g, ' ')
+                        .replace(/&amp;/g, '&')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+
+                    var isLong = cleanText.length > 80;
+                    var shortText = isLong ? cleanText.substring(0, 80) + '...' : cleanText;
+                    var imageUrl = item.MAIN_IMG_NORMAL || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e';
+
+                    var card = document.createElement('div');
+                    card.className = 'bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col';
+
+                    var imgWrap = document.createElement('div');
+                    imgWrap.className = 'relative bg-slate-200';
+                    imgWrap.style.aspectRatio = '4/3';
+
+                    var img = document.createElement('img');
+                    img.src = imageUrl;
+                    img.className = 'w-full h-full object-cover';
+                    img.onerror = function() {
+                        this.src = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e';
+                    };
+                    imgWrap.appendChild(img);
+                    card.appendChild(imgWrap);
+
+                    var body = document.createElement('div');
+                    body.className = 'p-6 flex flex-col flex-1';
+
+                    var title = document.createElement('h3');
+                    title.className = 'text-lg font-bold text-slate-800 mb-3';
+                    title.style.overflow = 'hidden';
+                    title.style.textOverflow = 'ellipsis';
+                    title.style.whiteSpace = 'nowrap';
+                    title.textContent = item.MAIN_TITLE || '';
+                    body.appendChild(title);
+
+                    var shortP = document.createElement('p');
+                    shortP.className = 'text-slate-500 text-sm leading-relaxed';
+                    shortP.style.display = 'block';
+                    shortP.textContent = shortText;
+                    body.appendChild(shortP);
+
+                    var fullP = document.createElement('p');
+                    fullP.className = 'text-slate-500 text-sm leading-relaxed';
+                    fullP.style.display = 'none';
+                    fullP.textContent = cleanText;
+                    body.appendChild(fullP);
+
+                    if (isLong) {
+                        var btn = document.createElement('button');
+                        btn.className = 'text-xs font-bold text-blue-500 mt-2 text-left';
+                        btn.textContent = '더보기 +';
+
+                        (function(s, f, b) {
+                            b.addEventListener('click', function() {
+                                if (f.style.display === 'none') {
+                                    f.style.display = 'block';
+                                    s.style.display = 'none';
+                                    b.textContent = '접기 -';
+                                } else {
+                                    f.style.display = 'none';
+                                    s.style.display = 'block';
+                                    b.textContent = '더보기 +';
+                                }
+                            });
+                        })(shortP, fullP, btn);
+
+                        body.appendChild(btn);
+                    }
+
+                    card.appendChild(body);
+                    grid.appendChild(card);
+                }
+
+            } catch (e) {
+                console.error(e);
+                grid.innerHTML = '<div class="col-span-full text-center py-20 text-red-400">오류: ' + e.message + '</div>';
+            }
+        }
+
+        window.onload = fetchThemeData;
+    </script>
+</body>
+</html>
